@@ -1,0 +1,35 @@
+# Data
+data/
+datasets/
+*.cat
+
+# Model checkpoints
+checkpoints/
+runs/
+outputs/
+*.pth
+*.pt
+*.ckpt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Conda env
+env/
+venv/
+
+# Logs
+logs/
+wandb/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
