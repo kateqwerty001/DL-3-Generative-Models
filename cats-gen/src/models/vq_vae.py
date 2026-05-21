@@ -42,50 +42,71 @@ class Encoder(nn.Module):
 class VectorQuantizer(nn.Module):
     """
     Quantizes encoder output to nearest codebook vector.
+    Uses EMA updates instead of gradient descent to prevent codebook collapse.
     Input: (B, D, H, W) -> Output: z_q (B, D, H, W), indices (B, H, W), loss
     """
-    def __init__(self, num_embeddings=512, embedding_dim=256, beta=0.25):
+    def __init__(self, num_embeddings=512, embedding_dim=256, beta=0.25, decay=0.99, eps=1e-5):
         super().__init__()
-        self.K = num_embeddings
-        self.D = embedding_dim
-        self.beta = beta
+        self.K     = num_embeddings
+        self.D     = embedding_dim
+        self.beta  = beta
+        self.decay = decay
+        self.eps   = eps
 
-        self.codebook = nn.Embedding(self.K, self.D)
-        nn.init.uniform_(self.codebook.weight, -1/self.K, 1/self.K)
+        embed = torch.randn(self.K, self.D) * 0.1
+        self.register_buffer("codebook",          embed.clone())
+        self.register_buffer("ema_cluster_size",  torch.zeros(self.K))
+        self.register_buffer("ema_embed_sum",     embed.clone())
 
     def forward(self, z_encoder):
         # (B, D, H, W) -> (B, H, W, D)
         z_encoder = z_encoder.permute(0, 2, 3, 1).contiguous()
         B, H, W, D = z_encoder.shape
 
-        # L2 distances between each encoder vector and each codebook entry
         flat = z_encoder.view(-1, D)
+
+        # L2 distances between each encoder vector and each codebook entry
         distances = (
-            flat.pow(2).sum(1, keepdim=True) - 2 * flat @ self.codebook.weight.t() + self.codebook.weight.pow(2).sum(1)
+            flat.pow(2).sum(1, keepdim=True)
+            - 2 * flat @ self.codebook.t()
+            + self.codebook.pow(2).sum(1)
         )
 
-        indices = distances.argmin(1)
-        z_quantized = self.codebook(indices).view(B, H, W, D)
+        indices    = distances.argmin(1)
+        z_quantized = self.codebook[indices].view(B, H, W, D)
 
-        # losses
-        codebook_loss = F.mse_loss(z_quantized, z_encoder.detach())
-        commitment_loss = F.mse_loss(z_encoder, z_quantized.detach())
-        loss = codebook_loss + self.beta * commitment_loss
+        # EMA update (only during training)
+        if self.training:
+            one_hot = torch.zeros(flat.shape[0], self.K, device=flat.device)
+            one_hot.scatter_(1, indices.unsqueeze(1), 1)
 
-        # straight-through estimator: forward=z_q, backward=z_e
+            cluster_size = one_hot.sum(0)
+            embed_sum    = one_hot.t() @ flat.detach()
+
+            self.ema_cluster_size = self.decay * self.ema_cluster_size + (1 - self.decay) * cluster_size
+            self.ema_embed_sum    = self.decay * self.ema_embed_sum    + (1 - self.decay) * embed_sum
+
+            # Laplace smoothing to avoid division by zero
+            n         = self.ema_cluster_size.sum()
+            smoothed  = (self.ema_cluster_size + self.eps) / (n + self.K * self.eps) * n
+            self.codebook = self.ema_embed_sum / smoothed.unsqueeze(1)
+
+        # only commitment loss — codebook loss not needed with EMA
+        loss = self.beta * F.mse_loss(z_encoder, z_quantized.detach())
+
+        # straight-through estimator
         z_quantized = z_encoder + (z_quantized - z_encoder).detach()
 
         # (B, H, W, D) -> (B, D, H, W)
         z_quantized = z_quantized.permute(0, 3, 1, 2).contiguous()
-        indices = indices.view(B, H, W)
+        indices     = indices.view(B, H, W)
 
         return z_quantized, indices, loss
 
     def codebook_utilization(self, indices):
         """Fraction of codebook entries used in this batch (diagnostic)."""
         unique = indices.unique().numel()
-        ratio = unique/self.K
-        return ratio
+        return unique / self.K
 
 
 class Decoder(nn.Module):
