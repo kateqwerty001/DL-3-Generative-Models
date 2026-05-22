@@ -98,7 +98,7 @@ class VectorQuantizer(nn.Module):
         z_quantized = z_encoder + (z_quantized - z_encoder).detach()
 
         # (B, H, W, D) -> (B, D, H, W)
-        z_quantized = z_quantized.permute(0, 3, 1, 2).contiguous()
+        z_quantized = z_quantized.permute(0, 3, 1, 2).contiguous()  # (B, D, H, W)
         indices     = indices.view(B, H, W)
 
         return z_quantized, indices, loss
@@ -126,7 +126,7 @@ class Decoder(nn.Module):
             nn.ReLU(),
             # 64x64 -> 128x128
             nn.ConvTranspose2d(hidden_dim, out_channels, kernel_size=4, stride=2, padding=1),
-            nn.Tanh(), 
+            nn.Sigmoid(),  # output in [0, 1]
         )
 
     def forward(self, z_quantized):
@@ -157,11 +157,11 @@ class VQ_VAE(nn.Module):
 
         return indices
 
-    def decode_indiced(self, indices):
+    def decode_indices(self, indices):
         """Decodes codebook indices back to images """
         with torch.no_grad():
-            z_quantized = self.quantizer.codebook(indices)
-            z_quantized = z_quantized.permute(0, 3, 1, 2).contiguous()
+            z_quantized = self.quantizer.codebook[indices]
+            z_quantized = z_quantized.permute(0, 3, 1, 2).contiguous()  # (B, D, H, W)
             x_reconstructed =self.decoder(z_quantized)
 
         return x_reconstructed
