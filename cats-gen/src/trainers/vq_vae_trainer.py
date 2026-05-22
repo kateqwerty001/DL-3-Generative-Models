@@ -14,7 +14,7 @@ class VQVAETrainer:
         - logs/vqvae_train_log.csv         (one row per epoch)
     """
 
-    def __init__(self, model, optimizer, device, save_dir="checkpoints", keep_last=3):
+    def __init__(self, model, optimizer, device, save_dir="checkpoints", keep_last=3, run_name="vqvae"):
         self.model      = model
         self.optimizer  = optimizer
         self.device     = device
@@ -25,7 +25,7 @@ class VQVAETrainer:
         self.save_dir.mkdir(parents=True, exist_ok=True)
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-        self.log_path       = self.log_dir / "vqvae_train_log.csv"
+        self.log_path       = self.log_dir / f"{run_name}_train_log.csv"
         self.best_loss      = float("inf")
         self.saved_epochs   = []
 
