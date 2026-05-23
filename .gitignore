@@ -8,7 +8,6 @@ checkpoints/
 runs/
 outputs/
 *.pth
-*.pt
 *.ckpt
 
 # Jupyter
