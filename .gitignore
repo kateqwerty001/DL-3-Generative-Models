@@ -25,7 +25,6 @@ env/
 venv/
 
 # Logs
-logs/
 wandb/
 *.log
 
