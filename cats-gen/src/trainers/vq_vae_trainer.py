@@ -136,3 +136,14 @@ class VQVAETrainer:
             old = self.saved_epochs.pop(0)
             if old.exists():
                 old.unlink()
+
+    def load_checkpoint(self, path):
+        """Loads model and optimizer states from a checkpoint."""
+        ckpt = torch.load(path, map_location=self.device)
+        self.model.load_state_dict(ckpt["model"])
+        
+        if "optimizer" in ckpt:
+            self.optimizer.load_state_dict(ckpt["optimizer"])
+            
+        print(f"Loaded checkpoint from {path} (epoch {ckpt['epoch']})")
+        return ckpt["epoch"]
