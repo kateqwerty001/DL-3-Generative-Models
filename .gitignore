@@ -8,7 +8,6 @@ checkpoints/
 runs/
 outputs/
 *.pth
-*.pt
 *.ckpt
 
 # Jupyter
@@ -26,7 +25,6 @@ env/
 venv/
 
 # Logs
-logs/
 wandb/
 *.log
 
