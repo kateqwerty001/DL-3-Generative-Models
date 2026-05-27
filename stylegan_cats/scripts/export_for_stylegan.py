@@ -1,20 +1,34 @@
 import sys
-sys.path.append("src")
-from cat_datasets import get_cat_dataloaders
-import torchvision.utils as vutils
 from pathlib import Path
+import torchvision.utils as vutils
 
-out_dir = Path("data_stylegan_raw")
-out_dir.mkdir(exist_ok=True)
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+
+sys.path.append(str(REPO_ROOT / "datasets")) 
+from cat_datasets import get_cat_dataloaders
+
+out_dir = REPO_ROOT.parent / "data_stylegan_raw"
+out_dir.mkdir(parents=True, exist_ok=True)
+
+DATA_DIR = REPO_ROOT.parent / "data" / "cats" # select folder with cats only 
+
+print("Loading data from: {}".format(DATA_DIR))
+print("Saving images to: {}".format(out_dir))
 
 train_loader, _, _ = get_cat_dataloaders(
-    "data", batch_size=64, image_size=128,
-    num_workers=1, model_type="vqvae", seed=42
+    root_dir=str(DATA_DIR), 
+    batch_size=64, 
+    image_size=128,
+    num_workers=1, 
+    seed=42
 )
 
 saved = 0
 for batch in train_loader:
     for img in batch:
-        vutils.save_image(img, out_dir / f"{saved:05d}.png")
+        save_path = str(out_dir) + "/{:05d}.png".format(saved)
+        vutils.save_image(img, save_path)
         saved += 1
-print(f"Saved {saved} images")
+        
+print("Successfully saved {} images!".format(saved))
