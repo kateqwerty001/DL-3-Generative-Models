@@ -14,11 +14,13 @@ rm -rf ~/.cache/torch_extensions
 export TORCH_EXTENSIONS_DIR=/tmp/torch_ext_$$
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
+export PYTHONWARNINGS="ignore"
+
 cd ~/DL-3-Generative-Models/stylegan2-ada-pytorch
 
 python train.py \
-  --outdir=../cats-gen/stylegan_runs \
-  --data=../cats-gen/data_stylegan/cats128.zip \
+  --outdir=../stylegan_runs_cats \
+  --data=../../data_stylegan/cats128.zip \
   --cfg=auto \
   --mirror=1 \
   --aug=noaug \

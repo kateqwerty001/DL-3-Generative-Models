@@ -1,7 +1,7 @@
 """
 Compute FID for each StyleGAN2-ADA checkpoint x truncation_psi combination.
 Also saves 10x10 grid of generated images for each combination.
-Results saved to outputs/stylegan_fid_results.csv
+Results saved to metrics_output/stylegan_fid_results.csv
 """
 
 import sys
@@ -12,8 +12,11 @@ import torchvision.utils as vutils
 import torch_fidelity
 import pickle
 
-sys.path.append("src")
-sys.path.append("../stylegan2-ada-pytorch")
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent.parent
+
+sys.path.append(str(REPO_ROOT / "datasets"))
+sys.path.append(str(REPO_ROOT / "stylegan2-ada-pytorch"))
 
 from cat_datasets import get_cat_dataloaders
 
@@ -21,12 +24,14 @@ from cat_datasets import get_cat_dataloaders
 # CONFIG
 # ────────────────────────────────────────────────────────────────────────────
 
-RUN_DIR         = Path("stylegan_runs/00000-cats128-mirror-auto1-gamma50-kimg1000-noaug")
+RUN_DIR         = Path("/home2/faculty/kbokhan/DL-3-Generative-Models/stylegan_runs_cats/00000-cats128-mirror-auto1-kimg1000-noaug")
+
 N_GEN           = 500
 N_REAL          = 500
 REAL_DIR        = Path("outputs/fid_real")
-LOG_PATH        = Path("outputs/stylegan_fid_results.csv")
-GRIDS_DIR       = Path("outputs/stylegan_grids")
+LOG_PATH        = Path("outputs_cats/stylegan_fid_results.csv")
+GRIDS_DIR       = Path("outputs_cats/stylegan_grids")
+DATA_DIR        = Path("/home2/faculty/kbokhan/data/cats")
 
 TRUNCATIONS     = [0.1, 0.8, 0.85, 0.9, 0.95, 1.0]
 
@@ -45,7 +50,7 @@ def ensure_real_images():
         return
     REAL_DIR.mkdir(parents=True, exist_ok=True)
     _, _, test_loader = get_cat_dataloaders(
-        "data", batch_size=16, image_size=128,
+        DATA_DIR, batch_size=16, image_size=128,
         num_workers=1, model_type="vqvae",
         val_size=500, test_size=N_REAL, seed=42,
     )

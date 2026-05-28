@@ -27,7 +27,7 @@ class CatsDogsDataset(Dataset):
 
         return image
 
-def get_cats_dogs_dataloaders(root_dir, batch_size=64, image_size=128, num_workers=4, model_type="vqvae", val_size=500, test_size=500, seed=42):
+def get_cats_dogs_dataloaders(root_dir, batch_size=64, image_size=128, num_workers=4, model_type="vqvae", val_size=4000, test_size=4000, seed=42):
     """Creates Train, Val, and Test DataLoaders."""
     
     transform_list = [

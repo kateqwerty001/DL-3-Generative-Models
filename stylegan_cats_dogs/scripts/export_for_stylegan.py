@@ -6,17 +6,17 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 REPO_ROOT = SCRIPT_DIR.parent.parent
 
 sys.path.append(str(REPO_ROOT / "datasets")) 
-from cat_datasets import get_cat_dataloaders
+from cats_dogs_datasets import get_cats_dogs_dataloaders
 
 out_dir = REPO_ROOT.parent / "data_stylegan_raw"
 out_dir.mkdir(parents=True, exist_ok=True)
 
-DATA_DIR = REPO_ROOT.parent / "data" / "cats_dogs" # select folder with cats only 
+DATA_DIR = REPO_ROOT.parent / "data" / "cats_dogs" # select folder with cats and dogs 
 
 print("Loading data from: {}".format(DATA_DIR))
 print("Saving images to: {}".format(out_dir))
 
-train_loader, _, _ = get_cat_dataloaders(
+train_loader, _, _ = get_cats_dogs_dataloaders(
     root_dir=str(DATA_DIR), 
     batch_size=64, 
     image_size=128,
