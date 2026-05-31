@@ -1,33 +1,20 @@
 import itertools
-import sys
 
 import torch
 from torch.optim import Adam
 
-sys.path.append("datasets")
-
-from datasets.cat_datasets import get_cat_dataloaders
-
-sys.path.append("src")
-
-from wgan_gp_cats.src.models.wgan_gp import Generator, Critic, weights_init
-from wgan_gp_cats.src.trainers.wgan_gp_trainer import WGAN_GP_Trainer
-
-
-# ============================================================
-# Hyperparameter grid (like your VQ-VAE grid search)
-# ============================================================
+from cat_datasets import get_cat_dataloaders
+from wgan_gp import Generator, Critic, weights_init
+from wgan_gp_trainer import WGAN_GP_Trainer
 
 LAMBDA_GPS = [5, 10, 15]
 N_CRITICS = [2, 3, 5]
-# LATENT_DIMS = [64, 128]
-LATENT_DIMS = [128]
+LATENT_DIMS = [64, 128]
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def run_experiment(lambda_gp, n_critic, latent_dim):
-
     print(f"\nRunning: λ={lambda_gp}, n_critic={n_critic}, z={latent_dim}")
 
     train_loader, _, _ = get_cat_dataloaders(
@@ -43,7 +30,7 @@ def run_experiment(lambda_gp, n_critic, latent_dim):
     G.apply(weights_init)
     C.apply(weights_init)
 
-    g_opt = Adam(G.parameters(), lr=1e-4, betas=(0.0, 0.9))
+    g_opt = Adam(G.parameters(), lr=2e-4, betas=(0.0, 0.9))
     c_opt = Adam(C.parameters(), lr=1e-4, betas=(0.0, 0.9))
 
     trainer = WGAN_GP_Trainer(
@@ -55,15 +42,12 @@ def run_experiment(lambda_gp, n_critic, latent_dim):
         latent_dim=latent_dim,
         lambda_gp=lambda_gp,
         n_critic=n_critic,
-        run_name=f"wgan_gp_l{lambda_gp}_n{n_critic}_z{latent_dim}"
+        run_name=f"wgan_gp_l{lambda_gp}_n{n_critic}_z{latent_dim}_v2",
+        save_dir=f"checkpoints/wgan_gp_l{lambda_gp}_n{n_critic}_z{latent_dim}"
     )
 
     trainer.train(train_loader, num_epochs=50)
 
-
-# ============================================================
-# Grid search
-# ============================================================
 
 for lg, nc, ld in itertools.product(LAMBDA_GPS, N_CRITICS, LATENT_DIMS):
     run_experiment(lg, nc, ld)

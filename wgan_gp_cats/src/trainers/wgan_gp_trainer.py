@@ -9,19 +9,19 @@ from torchvision.utils import save_image
 class WGAN_GP_Trainer:
 
     def __init__(
-        self,
-        generator,
-        critic,
-        g_optimizer,
-        c_optimizer,
-        device,
-        latent_dim=128,
-        lambda_gp=10,
-        n_critic=3,
-        save_dir="checkpoints",
-        sample_dir="samples",
-        run_name="wgan_gp",
-        keep_last=3
+            self,
+            generator,
+            critic,
+            g_optimizer,
+            c_optimizer,
+            device,
+            latent_dim=128,
+            lambda_gp=10,
+            n_critic=3,
+            save_dir="checkpoints",
+            sample_dir="samples",
+            run_name="wgan_gp",
+            keep_last=3
     ):
 
         self.G = generator
@@ -58,9 +58,7 @@ class WGAN_GP_Trainer:
         )
 
         if not self.log_path.exists():
-
             with open(self.log_path, "w", newline="") as f:
-
                 writer = csv.writer(f)
 
                 writer.writerow([
@@ -71,10 +69,6 @@ class WGAN_GP_Trainer:
                     "gradient_penalty",
                     "epoch_time_sec"
                 ])
-
-    # ============================================================
-    # Gradient Penalty
-    # ============================================================
 
     def gradient_penalty(self, real, fake):
 
@@ -103,10 +97,6 @@ class WGAN_GP_Trainer:
 
         return gp
 
-    # ============================================================
-    # Train One Epoch
-    # ============================================================
-
     def train_epoch(self, dataloader):
 
         self.G.train()
@@ -123,12 +113,7 @@ class WGAN_GP_Trainer:
 
             B = real_images.size(0)
 
-            # ====================================================
-            # Train Critic
-            # ====================================================
-
             for _ in range(self.n_critic):
-
                 z = torch.randn(B, self.latent_dim, device=self.device)
 
                 fake_images = self.G(z).detach()
@@ -137,14 +122,14 @@ class WGAN_GP_Trainer:
                 fake_score = self.C(fake_images)
 
                 wasserstein_distance = (
-                    real_score.mean() - fake_score.mean()
+                        real_score.mean() - fake_score.mean()
                 )
 
                 gp = self.gradient_penalty(real_images, fake_images)
 
                 critic_loss = (
-                    -wasserstein_distance
-                    + self.lambda_gp * gp
+                        -wasserstein_distance
+                        + self.lambda_gp * gp
                 )
 
                 self.c_optimizer.zero_grad()
@@ -152,10 +137,6 @@ class WGAN_GP_Trainer:
                 critic_loss.backward()
 
                 self.c_optimizer.step()
-
-            # ====================================================
-            # Train Generator
-            # ====================================================
 
             z = torch.randn(B, self.latent_dim, device=self.device)
 
@@ -185,10 +166,6 @@ class WGAN_GP_Trainer:
             total_gp / n
         )
 
-    # ============================================================
-    # Save Generated Samples
-    # ============================================================
-
     @torch.no_grad()
     def save_samples(self, epoch):
 
@@ -204,14 +181,9 @@ class WGAN_GP_Trainer:
             nrow=4
         )
 
-    # ============================================================
-    # Training Loop
-    # ============================================================
-
     def train(self, train_loader, num_epochs, start_epoch=1):
 
         for epoch in range(start_epoch, start_epoch + num_epochs):
-
             t0 = time.time()
 
             c_loss, g_loss, wd, gp = self.train_epoch(train_loader)
@@ -221,7 +193,6 @@ class WGAN_GP_Trainer:
             self.save_samples(epoch)
 
             with open(self.log_path, "a", newline="") as f:
-
                 writer = csv.writer(f)
 
                 writer.writerow([
@@ -244,10 +215,6 @@ class WGAN_GP_Trainer:
 
             self._save_checkpoint(epoch, g_loss)
 
-    # ============================================================
-    # Checkpointing
-    # ============================================================
-
     def _save_checkpoint(self, epoch, g_loss):
 
         path = self.save_dir / f"wgan_gp_epoch_{epoch:03d}.pt"
@@ -261,7 +228,6 @@ class WGAN_GP_Trainer:
         }, path)
 
         if g_loss < self.best_g_loss:
-
             self.best_g_loss = g_loss
 
             best_path = self.save_dir / "wgan_gp_best.pt"
