@@ -9,10 +9,6 @@ outputs/
 *.pth
 *.ckpt
 
-# Jupyter
-.ipynb_checkpoints/
-*.ipynb
-
 # Python
 __pycache__/
 *.pyc
