@@ -23,7 +23,7 @@ python train.py \
   --data=../../data_stylegan/cats128.zip \
   --cfg=auto \
   --mirror=1 \
-  --aug=noaug \
+  --aug=ada \
   --kimg=1000 \
   --fp32=1 \
   --metrics=none \
